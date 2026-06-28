@@ -1,0 +1,29 @@
+classDiagram
+    %% PawPal+ UML Diagram
+    %% Four core classes matching app.py 
+
+    class Owner {
+        -owner_name: string
+    }
+
+    class Pet {
+        -pet_name: string
+        -species: string
+        -tasks: list~Task~
+        +add_task(title, duration_minutes, priority) void
+    }
+
+    class Task {
+        -title: string
+        -duration_minutes: int
+        -priority: string
+    }
+
+    class Scheduler {
+        -tasks: list~Task~
+        +generate_schedule() void
+    }
+
+    Owner --> Pet : owns
+    Pet --> Task : has
+    Scheduler --> Task : arranges
