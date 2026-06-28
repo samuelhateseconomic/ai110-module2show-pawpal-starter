@@ -5,13 +5,60 @@
 **a. Initial design**
 
 - Briefly describe your initial UML design.
+At first, I follow the three core actions: 
+1. add/edit pets
+2. add/edit tasks
+3. Schedule a Plan
+to build a three classes following as:
+1. Pet
+2. Task
+3. Daily Schedule
+And my UML design looks like after I reinforced it with Claude code and visualize it through mermaid.live:
+classDiagram
+    class Pet {
+        -name: string
+        -breed: string
+        -age: int
+        -owner_name: string
+        -available_start_time: str
+        -available_end_time: str
+        +add_pet(name, breed, age, owner_name, start, end) void
+        +edit_pet(name, breed, age, owner_name, start, end) void
+        +get_availability() tuple
+    }
+    
+    class Task {
+        -task_id: int
+        -name: string
+        -duration_min: int
+        -priority: str (HIGH/MEDIUM/LOW)
+        -category: str
+        +add_task(name, duration, priority, category) int
+        +edit_task(task_id, name, duration, priority, category) void
+        +get_priority() str
+    }
+    
+    class DailySchedule {
+        -pet: Pet
+        -tasks: list[Task]
+        -scheduled_items: list[dict]
+        -date: str
+        +generate_schedule(pet, tasks) list
+        +get_schedule() list[dict]
+        +explain_reasoning() str
+    }
+    
+    DailySchedule --> Pet: uses constraints from
+    DailySchedule --> Task: arranges
+
 - What classes did you include, and what responsibilities did you assign to each?
+I believe my UML on top does included the answer for this question.
 
 **b. Design changes**
 
 - Did your design change during implementation?
 - If yes, describe at least one change and why you made it.
-
+NOT YET. 
 ---
 
 ## 2. Scheduling Logic and Tradeoffs
@@ -69,3 +116,5 @@
 **c. Key takeaway**
 
 - What is one important thing you learned about designing systems or working with AI on this project?
+
+chore: add class skeletons from UML
