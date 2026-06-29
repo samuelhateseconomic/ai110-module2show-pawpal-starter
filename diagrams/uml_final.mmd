@@ -1,0 +1,73 @@
+classDiagram
+    %% PawPal+ UML — updated to match pawpal_system.py + app.py
+    %% Lines marked [NEW] did not exist in the original uml.mmd
+
+    %% ── ScheduleResult (NamedTuple) ──────────────────── [NEW class]
+    class ScheduleResult {
+        +tasks: list~Task~
+        +conflicts: list~string~
+    }
+
+    %% ── Task ─────────────────────────────────────────────────────
+    class Task {
+        +title: string
+        +duration_minutes: int
+        +priority: string
+        +description: string          %% [NEW field]
+        +frequency: string            %% [NEW field] daily | weekly | as_needed
+        +completion_status: string    %% [NEW field] pending | complete
+        +start_time: string           %% [NEW field] HH:MM or None
+        +due_date: string             %% [NEW field] YYYY-MM-DD or None
+        +pet_name: string             %% [NEW field] set by Pet.add_task()
+        +mark_complete() void         %% [NEW method]
+        +mark_incomplete() void       %% [NEW method]
+        +next_occurrence() Task       %% [NEW method]
+    }
+
+    %% ── Pet ──────────────────────────────────────────────────────
+    class Pet {
+        +pet_name: string
+        +species: string
+        +tasks: list~Task~
+        +add_task(title, duration_minutes, priority, description, frequency, start_time) Task  %% [EXPANDED signature]
+        +get_tasks() list~Task~
+        +complete_task(title) Task    %% [NEW method]
+    }
+
+    %% ── Owner ────────────────────────────────────────────────────
+    class Owner {
+        +owner_name: string
+        +pets: list~Pet~              %% [NEW field]
+        +add_pet(pet_name, species) Pet          %% [NEW method]
+        +remove_pet(pet_name) bool               %% [NEW method]
+        +get_pets() list~Pet~                    %% [NEW method]
+        +get_all_tasks(pet_name, status) list~Task~  %% [NEW method]
+    }
+
+    %% ── Scheduler ────────────────────────────────────────────────
+    class Scheduler {
+        +tasks: list~Task~
+        +day_start: string            %% [NEW field] HH:MM
+        +day_end: string              %% [NEW field] HH:MM
+        +filter_recurring(day_of_week) list~Task~   %% [NEW method]
+        +assign_times() list~Task~                  %% [NEW method]
+        +sort_by_time() list~Task~                  %% [NEW method]
+        +detect_conflicts() list~string~            %% [NEW method]
+        +schedule() ScheduleResult                  %% [NEW method — replaces generate_schedule()]
+        +explain_reasoning() string                 %% [NEW method]
+    }
+
+    %% ── Persistence (module-level functions) ──────── [NEW class]
+    class Persistence {
+        <<utility>>
+        +save_owner(owner, path) void
+        +load_owner(path) Owner
+    }
+
+    %% ── Relationships ────────────────────────────────────────────
+    Owner "1" --> "0..*" Pet : owns
+    Pet   "1" --> "0..*" Task : has
+    Owner ..> Scheduler : passes tasks to   %% [NEW relationship]
+    Scheduler --> ScheduleResult : returns  %% [NEW relationship]
+    Scheduler "1" --> "0..*" Task : arranges
+    Persistence ..> Owner : serializes / restores   %% [NEW relationship]

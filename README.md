@@ -83,7 +83,6 @@ Schedule (high → low priority):
 - Fetch (medium priority, 15 min)
 - Grooming (low priority, 20 min)
 ```
-# Notice: There is no exact schedule time like 9 AM or any time in a day but only the amonut of time for the activities.
 
 ## 📐 Smarter Scheduling
 
@@ -134,14 +133,93 @@ timedelta(weeks=1)  # for frequency="weekly" → same day next week
 
 `timedelta` handles month and year boundaries automatically (e.g. January 31 + 1 day = February 1). The new task is appended to the pet's task list with `completion_status="pending"` so it shows up in the next schedule automatically.
 
+## 🧪 Testing PawPal+
+```PowerShell:
+
+# Run the full test suite:
+python -m pytest
+
+```
+Sample test output:
+
+```
+======================================================================= test session starts ========================================================================
+platform win32 -- Python 3.14.5, pytest-9.1.1, pluggy-1.6.0
+rootdir: G:\My Drive\Self_Study\AI110\ai110-module2show-pawpal-starter-main
+collected 23 items                                                                                                                                                  
+
+tests\test_pawpal.py .......................                                                                                                                  [100%]
+
+======================================================================== 23 passed in 0.32s ========================================================================
+```
+Confident Level: 5 stars
 ## 📸 Demo Walkthrough
 
-Describe your app in numbered steps so a reader can follow along without watching a video:
+### UI Features
 
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+The Streamlit app (`app.py`) exposes four interaction areas:
 
-**Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
+| Area | What the user can do |
+|---|---|
+| **Owner & Pet Setup** | Enter an owner name, pet name, and species, then click "Set Owner & Pet" to register them. Adding the same pet name twice returns the existing pet — no duplicates. |
+| **Add Tasks** | Enter a task title, duration (minutes), priority (low / medium / high), and an optional fixed time (`HH:MM`). Tasks with a fixed time become anchors the scheduler will not move; tasks without one are placed automatically. |
+| **Task Table** | Displays all current tasks across all pets with their pet name, duration, priority, fixed time (or "auto"), and completion status. |
+| **Build Schedule** | Set a day-start and day-end window (default 09:00–21:00), then click "Generate schedule". The app shows a sorted schedule table and either a green success banner or amber conflict warnings with revision tips. |
+
+---
+
+### Example Workflow
+
+1. Enter owner name **Jordan**, pet name **Mochi** (cat), click **Set Owner & Pet**.
+2. Add a second pet: **Biscuit** (dog), click **Set Owner & Pet** again.
+3. Add tasks for Mochi:
+   - "Vet visit" — 60 min, high, fixed time **10:00** *(anchor)*
+   - "Feeding" — 10 min, high, no fixed time *(floating)*
+   - "Grooming" — 20 min, low, no fixed time *(floating)*
+4. Add tasks for Biscuit:
+   - "Medication" — 5 min, high, no fixed time
+   - "Morning walk" — 30 min, high, no fixed time
+   - "Play session" — 20 min, low, no fixed time
+5. Click **Generate schedule** (window 09:00–21:00).
+
+The scheduler pins Vet visit at 10:00, creating two windows: `[09:00–10:00]` and `[11:00–21:00]`. It fills the first window with the shortest high-priority tasks (Medication → Feeding → Morning walk), then places the low-priority tasks after 11:00. The schedule table shows all six tasks sorted by start time with no conflicts.
+
+---
+
+### Key Scheduler Behaviors Shown
+
+**Anchor + window-filling (`assign_times`)**
+The 60-min Vet visit at 10:00 splits the day into two gaps. Floating tasks are placed gap-by-gap, priority-first, so the 09:00–10:00 gap fills up before anything spills to 11:00+.
+
+**Priority + shortest-first ordering**
+Within the same priority tier, the shortest task goes first. That is why 5-min Medication (`09:00`) precedes 10-min Feeding (`09:05`) and 30-min Morning walk (`09:15`) — all are `high`, placed shortest-first.
+
+**Sorting by time (`sort_by_time`)**
+The final table is always returned sorted by `HH:MM` string. Because the format is zero-padded, lexicographic order is the same as chronological order.
+
+**Conflict detection (`detect_conflicts`)**
+After times are assigned, every task pair is checked with `a_start < b_end and b_start < a_end`. Warnings are labelled `[SAME PET]` or `[CROSS PET]`. A second check sums all pending durations; if the total exceeds `day_end − day_start`, a budget-overflow warning is added.
+
+**Conflict warning tip (UI)**
+When a conflict is flagged, the app displays: *"Try changing a task's fixed time so it doesn't overlap, lower its priority, or shorten its duration."*
+
+---
+
+### CLI Output — `python main.py`
+
+```
+=== Window-filling schedule ===
+  Anchor: Vet visit pinned at 10:00 (ends 11:00)
+  Windows: [09:00-10:00] and [11:00-21:00]
+
+  09:00 | [HIGH  ] Medication           5 min  
+  09:05 | [HIGH  ] Feeding              10 min  
+  09:15 | [HIGH  ] Morning walk         30 min  
+  10:00 | [HIGH  ] Vet visit            60 min  (anchor)
+  11:00 | [LOW   ] Grooming             20 min  
+  11:20 | [LOW   ] Play session         20 min  
+
+No conflicts detected.
+```
+
+**Screenshot or video** *(optional)*: <!-- Insert a screenshot or Streamlit Cloud link here -->

@@ -1,6 +1,8 @@
 from __future__ import annotations
-from dataclasses import dataclass, field
+import json
+from dataclasses import dataclass, field, asdict
 from datetime import date, timedelta
+from pathlib import Path
 from typing import NamedTuple
 
 _PRIORITY_ORDER = {"high": 0, "medium": 1, "low": 2}
@@ -319,3 +321,29 @@ class Scheduler:
             lines.append("\nNo conflicts detected.")
 
         return "\n".join(lines)
+
+
+def save_owner(owner: Owner, path: str = "pawpal_save.json") -> None:
+    """Persist owner + all pets + all tasks to a JSON file."""
+    data = {
+        "owner_name": owner.owner_name,
+        "pets": [
+            {**asdict(pet)}
+            for pet in owner.pets
+        ],
+    }
+    Path(path).write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
+def load_owner(path: str = "pawpal_save.json") -> Owner | None:
+    """Load an Owner from a JSON file. Returns None if the file doesn't exist."""
+    p = Path(path)
+    if not p.exists():
+        return None
+    data = json.loads(p.read_text(encoding="utf-8"))
+    owner = Owner(data["owner_name"])
+    for pet_data in data["pets"]:
+        pet = owner.add_pet(pet_data["pet_name"], pet_data["species"])
+        for t in pet_data["tasks"]:
+            pet.tasks.append(Task(**t))
+    return owner
